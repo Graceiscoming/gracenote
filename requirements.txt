@@ -1,0 +1,55 @@
+# Gracenote - core Python requirements (Windows, Python 3.10 / 3.11)
+#
+# NOTE: torch / torchaudio are NOT listed here on purpose.
+#       They must be installed from the PyTorch CUDA index first
+#       (setup_windows.bat does this). Installing them from plain PyPI
+#       on Windows gives a CPU-only build.
+#
+# Versions are intentionally unpinned for the first install.
+# After Phase 0 passes, freeze what works:
+#       pip freeze > requirements.lock.txt
+
+# ---------- Backend ----------
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+websockets
+
+# ---------- System monitor (status bar) ----------
+psutil
+nvidia-ml-py
+
+# ---------- Download / audio I/O ----------
+yt-dlp
+soundfile
+numpy
+scipy
+numba
+librosa
+
+# ---------- Source separation ----------
+demucs
+audio-separator[gpu]
+
+# ---------- Pitch / F0 ----------
+torchcrepe
+
+# ---------- Lyrics ----------
+faster-whisper
+nvidia-cublas-cu12
+nvidia-cudnn-cu12>=9,<10
+pythainlp
+
+# ---------- Music theory ----------
+music21
+
+# ---------- Time-stretch / transpose backing track ----------
+# (also needs the rubberband command-line tool in PATH)
+pyrubberband
+
+# ---------- Export (SVG -> PNG/PDF) ----------
+playwright
+
+# ---------- Evaluation (benchmark set) ----------
+mir_eval

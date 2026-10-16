@@ -1,0 +1,50 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Environment / secrets
+.env
+.env.*
+
+# Claude Code personal settings
+.claude/settings.local.json
+CLAUDE.local.md
+
+# User data and heavy artifacts (copyright + size): never commit
+projects/
+samples/*
+!samples/README.md
+models/
+weights/
+cache/
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.ogg
+*.pt
+*.pth
+*.onnx
+*.ckpt
+
+# Benchmark: keep ground truth text files, never audio
+benchmark/audio/
+
+# Exports
+exports/
+*.gnproj
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

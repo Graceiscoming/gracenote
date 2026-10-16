@@ -1,0 +1,3 @@
+# Lightweight tools used by CI and for development (no torch needed)
+pytest
+ruff
