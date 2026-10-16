@@ -6,6 +6,8 @@
       "Bash(ruff *)",
       "Bash(python scripts/*)",
       "Bash(git status)",
+      "Bash(.venv/Scripts/python.exe *)",
+      "Bash(.venv\\Scripts\\python.exe *)",
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",

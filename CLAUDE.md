@@ -8,6 +8,7 @@ Spec เต็มอยู่ที่ `plan.md` — อ่านเฉพาะ
 
 ## Commands
 - Setup (ครั้งแรก): `setup_windows.bat`
+- ใช้ Python ของ venv เสมอ: `.venv\Scripts\python.exe` (หรือ activate ก่อน) ห้ามใช้ python ตัวนอก
 - เช็กการติดตั้ง: `python scripts/check_env.py` (เพิ่ม `--deep` เพื่อถอดเสียงจริงบน GPU ต้องมีอินเทอร์เน็ตโหลดโมเดล tiny)
 - Lint / format: `ruff check .` / `ruff format .`
 - Test ที่ไม่ใช้ GPU: `pytest -m "not gpu"` · ทั้งหมด: `pytest`
