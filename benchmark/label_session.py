@@ -96,6 +96,10 @@ class LabelSession:
             "notes": self._notes_json(),
             "verified": self._verified_json(),
             "range": {"start": self.range_start, "end": self.range_end},
+            "config": {
+                "default_new_note_sec": self.config.default_new_note_sec,
+                "min_note_sec": self.config.min_note_sec,
+            },
         }
 
     def apply(self, op: str, args: dict[str, Any]) -> None:
