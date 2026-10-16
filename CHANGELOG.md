@@ -9,6 +9,8 @@ All notable changes are documented here. Format based on [Keep a Changelog](http
 - `check_env.py --deep`: real faster-whisper transcription on the GPU to catch cuDNN/cuBLAS DLL problems.
 - `app.windows_dll.add_nvidia_dll_dirs()`: makes pip-installed NVIDIA DLLs visible on Windows before faster-whisper loads.
 - ADR 0004: note segmentation from multiple signals.
+- Phase 0 report with measured wall time and peak VRAM for separation, F0 (RMVPE and CREPE) and Whisper; `scripts/measure_stages.py`.
+- Benchmark labeling tool: `benchmark/make_draft.py` (machine draft from vocals + RMVPE), `benchmark/label_tool.py` (local piano-roll editor with a verified region and export of ground truth plus `.meta.json`).
 
 ### Changed
 - Autochord dropped from the plan (TensorFlow + Vamp plugin, major/minor only, last release 2021).

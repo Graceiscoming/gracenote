@@ -1,10 +1,10 @@
 # benchmark/
 
-Measures how accurate the melody transcriber is, using songs you transcribed by hand.
+วัดความแม่นยำของระบบแกะเมโลดี้ โดยเทียบกับโน้ตที่คนตรวจแก้เองแล้ว (ground truth)
 
-## Ground truth format
+## รูปแบบ ground truth
 
-One CSV per song in `ground_truth/`, named after the song (`song-name.csv`), one row per sung note:
+ไฟล์ CSV ต่อเพลงใน `ground_truth/` ชื่อตามเพลง (`song-name.csv`) หนึ่งแถวต่อหนึ่งโน้ตที่ร้อง:
 
 ```
 onset_sec,offset_sec,midi_pitch
@@ -12,13 +12,84 @@ onset_sec,offset_sec,midi_pitch
 12.810,13.200,66
 ```
 
-- `midi_pitch` is the sounding pitch (middle C = 60), not the guitar-written octave.
-- Keep the matching audio in `benchmark/audio/` (git-ignored) with the same base name.
+- `midi_pitch` คือเสียงที่ได้ยินจริง (C กลาง = 60 เรียกว่า C4) ไม่ใช่ octave ที่เขียนสำหรับกีตาร์
+- เวลาเป็นวินาทีบน timeline ของเพลงต้นฉบับทั้งเพลง
+- ไฟล์เสียงต้นฉบับเก็บใน `samples/` หรือ `benchmark/audio/` (ทั้งคู่ git-ignored ห้าม commit เสียง)
 
-## Rules
+คู่กับ CSV จะมี `song-name.meta.json` บอกว่าช่วงไหนที่ตรวจแล้ว:
 
-- Ground truth is never edited to make a score go up.
-- Metrics: note-level precision, recall and F1 with 50 ms onset tolerance (mir_eval), plus raw pitch accuracy.
-- Results are saved to `docs/BENCHMARK.md` with the date, the pipeline version and the number of songs.
+```json
+{
+  "song": "sample1",
+  "verified_start_sec": 30.0,
+  "verified_end_sec": 75.0,
+  "note_count": 80,
+  "provenance": "machine draft, human verified"
+}
+```
 
-`run.py` is created in Phase 0.
+CSV มีเฉพาะโน้ตที่อยู่ **ทั้งตัวภายในช่วง verified** เท่านั้น เวลาประเมินผลต้องนับเฉพาะช่วงนี้
+(ส่วนนอกช่วงยังไม่มีใครตรวจ ห้ามถือว่าเป็น "ไม่มีโน้ต")
+
+## ขั้นตอนสร้าง ground truth ด้วย labeling tool
+
+แกะโน้ตทั้งเพลงด้วยมือช้ามาก จึงให้เครื่องร่างให้ก่อน แล้วคนฟังและแก้ให้ถูก ทำทีละช่วงสั้นๆ ได้
+
+**เตรียมครั้งแรก** (ต้องมีทั้งสองอย่างสำหรับ RMVPE):
+- weights `rmvpe.pt` ที่ `models/rmvpe.pt` (โฟลเดอร์ `models/` ไม่ถูก commit) ที่มาและ sha256 ดู `docs/PHASE0_REPORT.md`
+- ไฟล์โค้ดโมเดล `infer/rmvpe.py` จากโปรเจกต์ [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) (MIT)
+  เก็บไว้นอก repo แล้วชี้ด้วย `--rmvpe-code <path>` หรือตัวแปรแวดล้อม `GRACENOTE_RMVPE_CODE`
+
+**1) ให้เครื่องร่างโน้ต** (ใช้ GPU: แยกเสียงร้องด้วย Demucs → F0 ด้วย RMVPE → ตัดโน้ตตามการเปลี่ยน pitch):
+
+```
+python benchmark/make_draft.py samples/sample1.mp3 --start 30 --end 75 --rmvpe-code <path>\rmvpe.py
+```
+
+ได้ `benchmark/drafts/sample1.csv` และ `sample1.draft.json` (โฟลเดอร์ `drafts/` ถูก git-ignore)
+ดราฟต์นี้แค่ช่วยประหยัดแรง **ไม่ใช่คำตอบ** โดยเฉพาะ octave ผิดและโน้ตที่แตก/รวมผิดต้องแก้ด้วยหู
+
+**2) เปิดเครื่องมือแก้**:
+
+```
+python benchmark/label_tool.py            # ถ้ามีดราฟต์เดียว
+python benchmark/label_tool.py --song sample1 --open
+```
+
+เปิด `http://127.0.0.1:8765/` หน้าเว็บจะเล่นเสียงต้นฉบับ แสดงโน้ตบน piano roll พร้อมชื่อโน้ตและ octave
+เปิด "เสียงโน้ต (synth)" เพื่อฟังโน้ตที่แก้เทียบกับเสียงร้องจริงพร้อมกันได้
+
+| ทำอะไร | วิธี |
+|---|---|
+| เล่น / หยุด | `Space` หรือปุ่ม เล่น |
+| เลื่อนตำแหน่งเล่น | คลิกที่ว่างหรือไม้บรรทัดเวลา |
+| เพิ่มโน้ต | ดับเบิลคลิกที่ว่าง (ยาว 0.2 วินาที ปรับขอบทีหลัง) |
+| ย้ายโน้ต / เปลี่ยน pitch | ลากตัวโน้ต (ซ้าย-ขวา = เวลา, ขึ้น-ลง = pitch) |
+| ย่อ / ขยายโน้ต | ลากขอบซ้ายหรือขวาของโน้ต |
+| pitch ±1 (ครึ่งเสียง) / ±12 (octave) | `↑` `↓` / `Shift` + `↑` `↓` |
+| เลื่อนโน้ต 0.01 วินาที | `←` `→` |
+| ตัดโน้ตเป็นสองท่อน | เลื่อนตำแหน่งเล่นเข้าไปในโน้ต แล้วกด `S` |
+| รวมกับโน้ตถัดไป | เลือกโน้ตแล้วกด `M` (pitch ใช้ของโน้ตที่ยาวกว่า) |
+| ลบโน้ต | `Delete` |
+| ซูม / เลื่อนเวลา | `Ctrl` + ล้อเมาส์ หรือ `+` `-` / ล้อเมาส์ |
+
+เมโลดี้ต้องไม่ซ้อนกัน ถ้าแก้แล้วโน้ตทับกันเครื่องมือจะปฏิเสธและบอกเหตุผล ให้ย่อโน้ตข้างเคียงก่อน
+ทุกการแก้บันทึกอัตโนมัติที่ `benchmark/drafts/<song>.work.json` ปิดเบราว์เซอร์แล้วเปิดต่อได้
+
+**3) ระบุช่วงที่ตรวจแล้ว (verified)**: ฟังและแก้จนมั่นใจเฉพาะช่วงหนึ่ง แล้วตั้งจุดเริ่ม/จบของช่วงนั้น
+(กรอกวินาทีในช่อง หรือเลื่อนตำแหน่งเล่นไปที่จุดนั้นแล้วกด `I` = เริ่ม, `O` = จบ)
+ช่วงที่ยังไม่ได้ฟังครบอย่าใส่ใน verified
+
+**4) ส่งออก**: กดปุ่ม "ส่งออก ground truth" จะเขียน `ground_truth/<song>.csv` และ `<song>.meta.json`
+เฉพาะโน้ตที่อยู่ทั้งตัวในช่วง verified (โน้ตที่คร่อมขอบช่วงจะถูกข้ามและแจ้งจำนวน)
+ถ้ามีไฟล์เดิมอยู่แล้วเครื่องมือจะถามยืนยันก่อนเขียนทับ — การส่งออกเป็นทางเดียวที่เครื่องมือเขียนลง `ground_truth/`
+จากนั้น commit ไฟล์ CSV และ meta (เป็นข้อความ ไม่ใช่เสียง) ได้
+
+## กฎ
+
+- ห้ามแก้ ground truth เพื่อให้คะแนนดีขึ้น แก้ได้เฉพาะเมื่อฟังแล้วพบว่าตอนตรวจผิดจริง และให้ commit แยกพร้อมเหตุผล
+- ดราฟต์ที่ยังไม่ผ่านการฟังและแก้ ห้ามนำไปใช้เป็น ground truth
+- ตัวชี้วัด: note-level precision, recall, F1 ที่ onset tolerance 50 ms (mir_eval) และ raw pitch accuracy
+- ผลบันทึกที่ `docs/BENCHMARK.md` พร้อมวันที่ เวอร์ชัน pipeline และจำนวนเพลง
+
+`run.py` (ตัวรันเบนช์มาร์ก) ยังไม่มี สร้างใน Phase 0b
