@@ -48,3 +48,6 @@ exports/
 Thumbs.db
 .idea/
 .vscode/
+
+# Labeling tool: machine drafts and work-in-progress edits (the exported ground truth is tracked)
+benchmark/drafts/
