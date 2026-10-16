@@ -65,6 +65,36 @@ def worker_f0(vocals: Path) -> None:
     torch.cuda.synchronize()
 
 
+def worker_rmvpe(vocals: Path, code: Path, weights: Path) -> None:
+    """Run RVC's RMVPE (MIT) from a local copy of its ``infer/rmvpe.py``; measurement only.
+
+    That file imports two project-specific modules; they are stubbed so the network is called
+    directly (no CUDA graphs). ``torch.load`` keeps its default ``weights_only=True``.
+    """
+    import importlib.util
+    import types
+
+    import librosa
+    import torch
+
+    cuda_graph = types.ModuleType("tools.cuda_graph")
+    cuda_graph.run_cuda_graph = lambda _model, _key, fn, x: fn(x)
+    config = types.ModuleType("configs.config")
+    config.get_device_dtype_sm = lambda i: (torch.device(f"cuda:{i}"), torch.float16, None, None)
+    sys.modules.update({
+        "tools": types.ModuleType("tools"), "tools.cuda_graph": cuda_graph,
+        "configs": types.ModuleType("configs"), "configs.config": config,
+    })  # fmt: skip
+    spec = importlib.util.spec_from_file_location("rvc_rmvpe", code)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    audio, _ = librosa.load(str(vocals), sr=16000, mono=True)
+    f0 = module.RMVPE(str(weights), is_half=True, device="cuda:0").infer_from_audio(audio)
+    torch.cuda.synchronize()
+    print(f"rmvpe frames={len(f0)} voiced={int((f0 > 0).sum())}")
+
+
 def worker_whisper(vocals: Path) -> None:
     sys.path.insert(0, str(ROOT / "backend"))
     from app.windows_dll import add_nvidia_dll_dirs
@@ -82,17 +112,23 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("song", type=Path)
     parser.add_argument("--out", type=Path, required=True, help="scratch folder for stems")
-    parser.add_argument("--worker", choices=["f0", "whisper"], help=argparse.SUPPRESS)
+    parser.add_argument("--worker", choices=["f0", "rmvpe", "whisper"], help=argparse.SUPPRESS)
+    parser.add_argument("--rmvpe-code", type=Path, help="local copy of RVC infer/rmvpe.py")
+    parser.add_argument("--rmvpe-weights", type=Path, default=ROOT / "models" / "rmvpe.pt")
     parser.add_argument("--vocals", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     if args.worker == "f0":
         worker_f0(args.vocals)
         return 0
+    if args.worker == "rmvpe":
+        worker_rmvpe(args.vocals, args.rmvpe_code, args.rmvpe_weights)
+        return 0
     if args.worker == "whisper":
         worker_whisper(args.vocals)
         return 0
 
+    stages_skip = "F0 (RMVPE fp16)" if args.rmvpe_code is None else None
     args.out.mkdir(parents=True, exist_ok=True)
     py = sys.executable
     me = str(Path(__file__).resolve())
@@ -104,6 +140,9 @@ def main() -> int:
         ],
         "F0 (torchcrepe full)": [py, me, str(args.song), "--out", str(args.out),
                                  "--worker", "f0", "--vocals", str(vocals)],
+        "F0 (RMVPE fp16)": [py, me, str(args.song), "--out", str(args.out), "--worker", "rmvpe",
+                            "--vocals", str(vocals), "--rmvpe-code", str(args.rmvpe_code),
+                            "--rmvpe-weights", str(args.rmvpe_weights)],
         "Lyrics (faster-whisper large-v3 fp16)": [
             py, me, str(args.song), "--out", str(args.out), "--worker", "whisper",
             "--vocals", str(vocals),
@@ -112,6 +151,8 @@ def main() -> int:
     print("| Stage | Wall time (s) | Peak VRAM (MiB) | Exit |\n|---|---|---|---|")
     failed = False
     for name, cmd in stages.items():
+        if name == stages_skip:
+            continue
         wall, peak, code = run_measured(cmd)
         failed |= code != 0
         print(f"| {name} | {wall:.1f} | {peak:.0f} | {code} |", flush=True)
