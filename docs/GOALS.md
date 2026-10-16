@@ -24,7 +24,7 @@
 
 ## Phase 1 — Audio → Piano Roll (MVP)
 ```
-/goal a local audio file in samples/ goes through ingest, separation, F0 and note segmentation and produces melody.json; the piano roll page shows notes labelled with name and octave (save a Playwright screenshot to docs/img/pianoroll.png); pytest -m "not gpu" and ruff pass; benchmark average note F1 is recorded in docs/BENCHMARK.md and is at least <BASELINE_F1>. Stop after 40 turns.
+/goal a local audio file in samples/ goes through ingest, separation, F0 and note segmentation and produces melody.json; the piano roll page shows notes labelled with name and octave (save a Playwright screenshot to docs/img/pianoroll.png); pytest -m "not gpu and not slow" and ruff pass; benchmark average note F1 is recorded in docs/BENCHMARK.md and is at least <BASELINE_F1>. Stop after 40 turns.
 ```
 
 ## Phase 2 — Analysis (key, tempo, chords, lyrics, structure)

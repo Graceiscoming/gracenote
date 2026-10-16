@@ -28,4 +28,4 @@ jobs:
 
       # GPU / heavy-model tests are marked "gpu" and only run on the developer machine
       - name: Tests (no GPU)
-        run: pytest -m "not gpu"
+        run: pytest -m "not gpu and not slow"

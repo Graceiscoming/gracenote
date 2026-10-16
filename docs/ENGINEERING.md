@@ -28,7 +28,7 @@
 
 กติกา:
 - **Test-first** เมื่อทำได้ โดยเฉพาะ solver และกฎต่างๆ (เขียนเมโลดี้สั้นๆ + tab ที่คาดหวัง)
-- Marker: `gpu` (ต้องใช้ CUDA/โมเดลหนัก), `slow` — CI รัน `pytest -m "not gpu"`
+- Marker: `gpu` (ต้องใช้ CUDA/โมเดลหนัก), `slow` — CI และการเช็กก่อน commit รัน `pytest -m "not gpu and not slow"` (`slow` เช่น browser smoke test รันเองด้วย `pytest -m slow`)
 - **ข้อมูลเสียงในเทสต์ต้องสร้างสังเคราะห์** (numpy) หรือเป็นเสียงที่เราอัดเองเท่านั้น ไม่ commit เพลงที่มีลิขสิทธิ์
 - แก้ bug = เขียนเทสต์ที่ fail ก่อน แล้วค่อยแก้
 - Benchmark เปลี่ยนแล้วต้องบันทึกผลก่อน-หลังใน commit/PR ห้ามแก้ ground truth เพื่อให้ตัวเลขดีขึ้น
@@ -87,7 +87,7 @@
 
 งานหนึ่งชิ้นถือว่าเสร็จเมื่อ:
 1. โค้ดทำงานตาม spec ของหัวข้อใน plan.md
-2. มีเทสต์ และ `pytest -m "not gpu"` ผ่าน
+2. มีเทสต์ และ `pytest -m "not gpu and not slow"` ผ่าน
 3. `ruff check .` และ `ruff format --check .` ผ่าน
 4. เอกสารที่เกี่ยวข้องอัปเดตแล้ว (README / plan.md / ADR / CHANGELOG)
 5. ถ้าแตะ pipeline ที่กระทบความแม่นยำ: รัน benchmark แล้วไม่แย่ลง (หรือบันทึกเหตุผลที่ยอมแลก)

@@ -11,7 +11,7 @@ Spec เต็มอยู่ที่ `plan.md` — อ่านเฉพาะ
 - ใช้ Python ของ venv เสมอ: `.venv\Scripts\python.exe` (หรือ activate ก่อน) ห้ามใช้ python ตัวนอก
 - เช็กการติดตั้ง: `python scripts/check_env.py` (เพิ่ม `--deep` เพื่อถอดเสียงจริงบน GPU ต้องมีอินเทอร์เน็ตโหลดโมเดล tiny)
 - Lint / format: `ruff check .` / `ruff format .`
-- Test ที่ไม่ใช้ GPU: `pytest -m "not gpu"` · ทั้งหมด: `pytest`
+- Test ที่ไม่ใช้ GPU: `pytest -m "not gpu and not slow"` · เฉพาะ slow: `pytest -m slow` · ทั้งหมด: `pytest`
 - Run app: `start.bat` (ยังไม่มี — สร้างใน Phase 1)
 - Benchmark: `python benchmark/run.py` (ยังไม่มี — สร้างใน Phase 0)
 

@@ -4,7 +4,7 @@
 
 ## Checklist
 
-- [ ] Tests added or updated, `pytest -m "not gpu"` passes
+- [ ] Tests added or updated, `pytest -m "not gpu and not slow"` passes
 - [ ] `ruff check .` and `ruff format --check .` pass
 - [ ] Docs updated (README / plan.md / ADR / CHANGELOG) if behaviour changed
 - [ ] If this touches the pipeline: benchmark run before and after (results below)
